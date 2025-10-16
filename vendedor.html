@@ -1,0 +1,1032 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - Burguer Express</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/feather-icons/dist/feather.min.js"></script>
+    
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.1/firebase-auth-compat.js"></script>
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#ff6b35',
+                        secondary: '#f7931e',
+                        dark: '#1f2937'
+                    }
+                }
+            }
+        }
+
+        // Configuración de Firebase
+        const firebaseConfig = {
+            apiKey: "AIzaSyBPh-QXPHoh5oL08asf8M_9q4LIzW0ToJ0",
+            authDomain: "pedidos-e3792.firebaseapp.com",
+            databaseURL: "https://pedidos-e3792-default-rtdb.firebaseio.com",
+            projectId: "pedidos-e3792",
+            storageBucket: "pedidos-e3792.firebasestorage.app",
+            messagingSenderId: "950052511125",
+            appId: "1:950052511125:web:2167266a26c62da5e0ea9c"
+        };
+
+        // Variables globales de Firebase
+        let firebaseApp;
+        let database;
+        let auth;
+
+        // Función para inicializar Firebase
+        function initializeFirebase() {
+            try {
+                if (!firebase.apps.length) {
+                    firebaseApp = firebase.initializeApp(firebaseConfig);
+                } else {
+                    firebaseApp = firebase.app();
+                }
+                
+                database = firebase.database();
+                auth = firebase.auth();
+                
+                console.log("✅ Firebase inicializado correctamente");
+                return true;
+            } catch (error) {
+                console.error("❌ Error inicializando Firebase:", error);
+                return false;
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <header class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center py-4">
+                <div class="flex items-center">
+                    <img src="https://i.imgur.com/3JK1fJK.png" alt="Burguer Express" class="size-10 rounded-full">
+                    <div class="ml-3">
+                        <h1 class="text-xl font-bold text-gray-900">Admin Burguer Express</h1>
+                        <p class="text-sm text-gray-500">Panel de gestión de pedidos</p>
+                    </div>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div id="connection-status" class="flex items-center text-sm">
+                        <span class="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
+                        <span>Conectando...</span>
+                    </div>
+                    <button onclick="toggleDarkMode()" class="p-2 rounded-lg bg-gray-100 hover:bg-gray-200">
+                        <i data-feather="moon"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+            <div class="bg-white rounded-xl shadow p-4 border-l-4 border-primary">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-sm text-gray-500">Total Pedidos</p>
+                        <p class="text-2xl font-bold" id="total-orders">0</p>
+                    </div>
+                    <div class="p-3 bg-primary/10 rounded-full">
+                        <i data-feather="shopping-bag" class="text-primary"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-4 border-l-4 border-yellow-500">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-sm text-gray-500">Pendientes</p>
+                        <p class="text-2xl font-bold" id="pending-orders">0</p>
+                    </div>
+                    <div class="p-3 bg-yellow-500/10 rounded-full">
+                        <i data-feather="clock" class="text-yellow-500"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-4 border-l-4 border-blue-500">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-sm text-gray-500">En Preparación</p>
+                        <p class="text-2xl font-bold" id="preparing-orders">0</p>
+                    </div>
+                    <div class="p-3 bg-blue-500/10 rounded-full">
+                        <i data-feather="package" class="text-blue-500"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="bg-white rounded-xl shadow p-4 border-l-4 border-green-500">
+                <div class="flex justify-between items-center">
+                    <div>
+                        <p class="text-sm text-gray-500">Entregados</p>
+                        <p class="text-2xl font-bold" id="delivered-orders">0</p>
+                    </div>
+                    <div class="p-3 bg-green-500/10 rounded-full">
+                        <i data-feather="check-circle" class="text-green-500"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters and Actions -->
+        <div class="bg-white rounded-xl shadow mb-6">
+            <div class="p-4 border-b">
+                <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0">
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                        <!-- Period Filter -->
+                        <div class="relative">
+                            <select id="period-filter" class="appearance-none bg-gray-50 border border-gray-300 rounded-lg pl-4 pr-10 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="all" selected>Todos</option>
+								<option value="today">Hoy</option>
+                                <option value="week">Esta Semana</option>
+                                <option value="month">Este Mes</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                <i data-feather="calendar" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+
+                        <!-- Status Filter -->
+                        <div class="relative">
+                            <select id="status-filter" class="appearance-none bg-gray-50 border border-gray-300 rounded-lg pl-4 pr-10 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="all">Todos los estados</option>
+                                <option value="pending">Pendiente</option>
+                                <option value="preparing">En preparación</option>
+                                <option value="ready">Listo</option>
+                                <option value="delivered">Entregado</option>
+                                <option value="cancelled">Cancelado</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                <i data-feather="filter" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+
+                        <!-- Sort Order -->
+                        <div class="relative">
+                            <select id="sort-order" class="appearance-none bg-gray-50 border border-gray-300 rounded-lg pl-4 pr-10 py-2 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="desc">Más recientes primero</option>
+                                <option value="asc">Más antiguos primero</option>
+                            </select>
+                            <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700">
+                                <i data-feather="arrow-up-down" class="w-4 h-4"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-4">
+                        <!-- Search -->
+                        <div class="relative">
+                            <input type="text" id="search-input" placeholder="Buscar por cliente..." class="bg-gray-50 border border-gray-300 rounded-lg pl-10 pr-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent w-full sm:w-64">
+                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                <i data-feather="search" class="text-gray-400 w-4 h-4"></i>
+                            </div>
+                        </div>
+
+                        <!-- Add Order Button -->
+                        <button onclick="openAddOrderModal()" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors flex items-center justify-center">
+                            <i data-feather="plus" class="w-4 h-4 mr-2"></i>
+                            Nuevo Pedido
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Orders List -->
+            <div id="orders-list" class="p-4">
+                <div class="text-center py-8">
+                    <i data-feather="loader" class="w-8 h-8 mx-auto animate-spin text-gray-400"></i>
+                    <p class="text-gray-500 mt-2">Cargando pedidos...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Add/Edit Order Modal -->
+    <div id="order-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold" id="modal-title">Nuevo Pedido</h3>
+                    <button onclick="closeOrderModal()" class="text-gray-500 hover:text-gray-700">
+                        <i data-feather="x"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <form id="order-form" class="p-6 space-y-4">
+                <input type="hidden" id="edit-order-id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Cliente *</label>
+                        <input type="text" id="customer-name" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Teléfono *</label>
+                        <input type="tel" id="customer-phone" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Dirección *</label>
+                    <textarea id="customer-address" rows="2" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Notas</label>
+                    <textarea id="customer-notes" rows="2" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Estado</label>
+                        <select id="order-status" class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="pending">Pendiente</option>
+                            <option value="preparing">En preparación</option>
+                            <option value="ready">Listo</option>
+                            <option value="delivered">Entregado</option>
+                            <option value="cancelled">Cancelado</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Total *</label>
+                        <input type="number" id="order-total" step="0.01" required class="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" readonly>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Items del Pedido</label>
+                    <div id="order-items" class="space-y-2">
+                        <!-- Items will be added dynamically -->
+                    </div>
+                    <button type="button" onclick="addOrderItem()" class="mt-2 text-primary hover:text-secondary flex items-center">
+                        <i data-feather="plus" class="w-4 h-4 mr-1"></i>
+                        Agregar item
+                    </button>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeOrderModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                        Guardar Pedido
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Order Details Modal -->
+    <div id="details-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold">Detalles del Pedido</h3>
+                    <button onclick="closeDetailsModal()" class="text-gray-500 hover:text-gray-700">
+                        <i data-feather="x"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6" id="details-content">
+                <!-- Details will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-xl p-6 max-w-sm w-full mx-4">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-feather="trash-2" class="text-red-600 w-6 h-6"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2">¿Eliminar pedido?</h3>
+                <p class="text-gray-600 mb-4">Esta acción no se puede deshacer.</p>
+                <div class="flex justify-center space-x-3">
+                    <button onclick="closeDeleteModal()" class="px-4 py-2 text-gray-600 hover:text-gray-800">
+                        Cancelar
+                    </button>
+                    <button onclick="confirmDelete()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Variables globales
+        let orders = [];
+        let currentOrders = [];
+        let orderToDelete = null;
+
+        // Inicializar cuando el DOM esté listo
+        document.addEventListener('DOMContentLoaded', function() {
+            feather.replace();
+            
+            // Inicializar Firebase
+            const firebaseInitialized = initializeFirebase();
+            
+            if (firebaseInitialized) {
+                updateConnectionStatus('Conectado', 'bg-green-500');
+                loadOrders();
+                setupEventListeners();
+            } else {
+                updateConnectionStatus('Error de conexión', 'bg-red-500');
+            }
+        });
+
+        // Configurar event listeners
+        function setupEventListeners() {
+            document.getElementById('period-filter').addEventListener('change', filterOrders);
+            document.getElementById('status-filter').addEventListener('change', filterOrders);
+            document.getElementById('search-input').addEventListener('input', filterOrders);
+            document.getElementById('sort-order').addEventListener('change', filterOrders);
+            document.getElementById('order-form').addEventListener('submit', saveOrder);
+            
+            // Event delegation para items del pedido
+            document.getElementById('order-items').addEventListener('input', function(e) {
+                if (e.target.type === 'number') {
+                    calculateOrderTotal();
+                }
+            });
+        }
+
+        // Actualizar estado de conexión
+        function updateConnectionStatus(message, dotColor) {
+            const statusElement = document.getElementById('connection-status');
+            statusElement.innerHTML = `
+                <span class="w-2 h-2 rounded-full mr-2 ${dotColor}"></span>
+                <span>${message}</span>
+            `;
+        }
+
+        // Cargar pedidos desde Firebase
+        function loadOrders() {
+            const ordersRef = database.ref('orders');
+            
+            ordersRef.on('value', (snapshot) => {
+                orders = [];
+                snapshot.forEach((childSnapshot) => {
+                    const order = childSnapshot.val();
+                    order.key = childSnapshot.key;
+                    orders.push(order);
+                });
+                
+                updateStats();
+                filterOrders();
+            }, (error) => {
+                console.error('Error cargando pedidos:', error);
+                updateConnectionStatus('Error cargando datos', 'bg-red-500');
+            });
+        }
+
+        // Actualizar estadísticas
+        function updateStats() {
+            const total = orders.length;
+            const pending = orders.filter(order => order.status === 'pending').length;
+            const preparing = orders.filter(order => order.status === 'preparing').length;
+            const delivered = orders.filter(order => order.status === 'delivered').length;
+
+            document.getElementById('total-orders').textContent = total;
+            document.getElementById('pending-orders').textContent = pending;
+            document.getElementById('preparing-orders').textContent = preparing;
+            document.getElementById('delivered-orders').textContent = delivered;
+        }
+
+        // Filtrar y mostrar pedidos
+        function filterOrders() {
+            const periodFilter = document.getElementById('period-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
+            const searchQuery = document.getElementById('search-input').value.toLowerCase();
+            const sortOrder = document.getElementById('sort-order').value;
+
+            let filteredOrders = [...orders];
+
+            // Filtrar por período
+            const now = new Date();
+            if (periodFilter === 'today') {
+                const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+                filteredOrders = filteredOrders.filter(order => {
+                    const orderDate = new Date(order.createdAt);
+                    return orderDate >= today;
+                });
+            } else if (periodFilter === 'week') {
+                const oneWeekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                filteredOrders = filteredOrders.filter(order => {
+                    const orderDate = new Date(order.createdAt);
+                    return orderDate >= oneWeekAgo;
+                });
+            } else if (periodFilter === 'month') {
+                const oneMonthAgo = new Date(now.getFullYear(), now.getMonth() - 1, now.getDate());
+                filteredOrders = filteredOrders.filter(order => {
+                    const orderDate = new Date(order.createdAt);
+                    return orderDate >= oneMonthAgo;
+                });
+            }
+
+            // Filtrar por estado
+            if (statusFilter !== 'all') {
+                filteredOrders = filteredOrders.filter(order => order.status === statusFilter);
+            }
+
+            // Filtrar por búsqueda
+            if (searchQuery) {
+                filteredOrders = filteredOrders.filter(order => 
+                    order.customer.name.toLowerCase().includes(searchQuery)
+                );
+            }
+
+            // Ordenar
+            filteredOrders.sort((a, b) => {
+                const timeA = a.createdAt || 0;
+                const timeB = b.createdAt || 0;
+                return sortOrder === 'desc' ? timeB - timeA : timeA - timeB;
+            });
+
+            currentOrders = filteredOrders;
+            displayOrders(filteredOrders);
+        }
+
+        // Mostrar pedidos en la lista
+        function displayOrders(ordersToDisplay) {
+            const ordersList = document.getElementById('orders-list');
+            
+            if (ordersToDisplay.length === 0) {
+                ordersList.innerHTML = `
+                    <div class="text-center py-8">
+                        <i data-feather="inbox" class="w-12 h-12 mx-auto text-gray-400"></i>
+                        <p class="text-gray-500 mt-2">No se encontraron pedidos</p>
+                    </div>
+                `;
+                feather.replace();
+                return;
+            }
+
+            let html = '<div class="space-y-4">';
+            
+            ordersToDisplay.forEach(order => {
+                const statusColors = {
+                    pending: 'bg-yellow-100 text-yellow-800',
+                    preparing: 'bg-orange-100 text-orange-800',
+                    ready: 'bg-purple-100 text-purple-800',
+                    delivered: 'bg-green-100 text-green-800',
+                    cancelled: 'bg-red-100 text-red-800'
+                };
+
+                const statusText = {
+                    pending: 'Pendiente',
+                    preparing: 'En preparación',
+                    ready: 'Listo',
+                    delivered: 'Entregado',
+                    cancelled: 'Cancelado'
+                };
+
+                const orderDate = new Date(order.createdAt);
+                const formattedDate = orderDate.toLocaleDateString('es-VE');
+                const formattedTime = orderDate.toLocaleTimeString('es-VE', { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+
+                html += `
+                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+                            <div class="flex-1">
+                                <div class="flex items-center justify-between mb-2">
+                                    <div>
+                                        <h4 class="font-semibold text-lg">#${order.orderNumber} - ${order.customer.name}</h4>
+                                        <p class="text-sm text-gray-500">${formattedDate} ${formattedTime}</p>
+                                    </div>
+                                    <span class="px-3 py-1 rounded-full text-sm font-medium ${statusColors[order.status]}">
+                                        ${statusText[order.status]}
+                                    </span>
+                                </div>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-2 text-sm text-gray-600">
+                                    <div class="flex items-center">
+                                        <i data-feather="phone" class="w-4 h-4 mr-2"></i>
+                                        ${order.customer.phone}
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i data-feather="dollar-sign" class="w-4 h-4 mr-2"></i>
+                                        $${order.total.toFixed(2)}
+                                    </div>
+                                    <div class="flex items-center">
+                                        <i data-feather="package" class="w-4 h-4 mr-2"></i>
+                                        ${order.items ? order.items.length : 0} items
+                                    </div>
+                                </div>
+                                ${order.customer.notes ? `
+                                    <div class="mt-2 text-sm text-gray-600">
+                                        <i data-feather="message-square" class="w-4 h-4 mr-2 inline"></i>
+                                        ${order.customer.notes}
+                                    </div>
+                                ` : ''}
+                            </div>
+                            <div class="flex items-center space-x-2 mt-4 sm:mt-0 sm:ml-4">
+                                <div class="flex space-x-1">
+                                    <button onclick="viewOrderDetails('${order.key}')" class="p-2 text-blue-600 hover:bg-blue-50 rounded-lg" title="Ver detalles">
+                                        <i data-feather="eye" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="editOrder('${order.key}')" class="p-2 text-green-600 hover:bg-green-50 rounded-lg" title="Editar">
+                                        <i data-feather="edit" class="w-4 h-4"></i>
+                                    </button>
+                                    <button onclick="deleteOrder('${order.key}')" class="p-2 text-red-600 hover:bg-red-50 rounded-lg" title="Eliminar">
+                                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            html += '</div>';
+            ordersList.innerHTML = html;
+            feather.replace();
+        }
+
+		 // Ver detalles del pedido
+		function viewOrderDetails(orderId) {
+			const order = orders.find(o => o.key === orderId);
+			if (!order) return;
+
+			const statusText = {
+				pending: 'Pendiente',
+				preparing: 'En preparación',
+				ready: 'Listo',
+				delivered: 'Entregado',
+				cancelled: 'Cancelado'
+			};
+
+			const orderDate = new Date(order.createdAt);
+			const formattedDate = orderDate.toLocaleDateString('es-VE');
+			const formattedTime = orderDate.toLocaleTimeString('es-VE', { 
+				hour: '2-digit', 
+				minute: '2-digit' 
+			});
+
+			let itemsHtml = '';
+			if (order.items && order.items.length > 0) {
+				itemsHtml = `
+					<div class="mt-4">
+						<h4 class="font-semibold mb-2">Items del pedido:</h4>
+						<div class="space-y-2">
+							${order.items.map(item => `
+								<div class="flex justify-between items-center p-2 bg-gray-50 rounded">
+									<div>
+										<span class="font-medium">${item.name}</span>
+										<span class="text-gray-600 ml-2">x${item.quantity}</span>
+									</div>
+									<div class="text-right">
+										<div>$${item.price.toFixed(2)} c/u</div>
+										<div class="font-semibold">$${(item.price * item.quantity).toFixed(2)}</div>
+									</div>
+								</div>
+							`).join('')}
+						</div>
+					</div>
+				`;
+			}
+
+			const detailsHtml = `
+				<div class="space-y-4">
+					<!-- Header con botón de copiar -->
+					<div class="flex justify-between items-center mb-4">
+						<h3 class="text-xl font-bold">Detalles del Pedido</h3>
+						<button onclick="copyOrderDetails('${orderId}')" 
+								class="flex items-center space-x-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+							<i data-feather="copy" class="w-4 h-4"></i>
+							<span>Copiar</span>
+						</button>
+					</div>
+
+					<div class="grid grid-cols-2 gap-4">
+						<div>
+							<label class="font-medium text-gray-700">Número de orden:</label>
+							<p class="text-lg font-semibold">#${order.orderNumber}</p>
+						</div>
+						<div>
+							<label class="font-medium text-gray-700">Estado:</label>
+							<p>${statusText[order.status]}</p>
+						</div>
+					</div>
+					
+					<div>
+						<label class="font-medium text-gray-700">Cliente:</label>
+						<p>${order.customer.name}</p>
+					</div>
+					
+					<div>
+						<label class="font-medium text-gray-700">Teléfono:</label>
+						<p>${order.customer.phone}</p>
+					</div>
+					
+					<div>
+						<label class="font-medium text-gray-700">Dirección:</label>
+						<p>${order.customer.address}</p>
+					</div>
+					
+					${order.customer.notes ? `
+						<div>
+							<label class="font-medium text-gray-700">Notas:</label>
+							<p>${order.customer.notes}</p>
+						</div>
+					` : ''}
+					
+					${itemsHtml}
+					
+					<div class="border-t pt-4">
+						<div class="flex justify-between items-center">
+							<span class="text-lg font-semibold">Total:</span>
+							<span class="text-lg font-semibold">$${order.total.toFixed(2)}</span>
+						</div>
+					</div>
+					
+					<div class="text-sm text-gray-500">
+						<p>Pedido realizado: ${formattedDate} ${formattedTime}</p>
+					</div>
+				</div>
+			`;
+
+			document.getElementById('details-content').innerHTML = detailsHtml;
+			document.getElementById('details-modal').classList.remove('hidden');
+			feather.replace();
+		}
+
+		// Función para copiar detalles del pedido al portapapeles
+		function copyOrderDetails(orderId) {
+			const order = orders.find(o => o.key === orderId);
+			if (!order) return;
+
+			const statusText = {
+				pending: 'Pendiente',
+				preparing: 'En preparación',
+				ready: 'Listo',
+				delivered: 'Entregado',
+				cancelled: 'Cancelado'
+			};
+
+			const orderDate = new Date(order.createdAt);
+			const formattedDate = orderDate.toLocaleDateString('es-VE');
+			const formattedTime = orderDate.toLocaleTimeString('es-VE', { 
+				hour: '2-digit', 
+				minute: '2-digit' 
+			});
+
+			// Formatear texto para copiar
+			let textToCopy = `PEDIDO #${order.orderNumber}\n`;
+			textToCopy += `====================\n`;
+			textToCopy += `Cliente: ${order.customer.name}\n`;
+			textToCopy += `Teléfono: ${order.customer.phone}\n`;
+			textToCopy += `Dirección: ${order.customer.address}\n`;
+			
+			if (order.customer.notes) {
+				textToCopy += `Notas: ${order.customer.notes}\n`;
+			}
+			
+			textToCopy += `Estado: ${statusText[order.status]}\n\n`;
+			
+			// Items del pedido
+			if (order.items && order.items.length > 0) {
+				textToCopy += `ITEMS DEL PEDIDO:\n`;
+				order.items.forEach(item => {
+					const subtotal = item.price * item.quantity;
+					textToCopy += `- ${item.name} x${item.quantity} - $${subtotal.toFixed(2)}\n`;
+				});
+				textToCopy += `\n`;
+			}
+			
+			textToCopy += `TOTAL: $${order.total.toFixed(2)}\n`;
+			textToCopy += `Fecha: ${formattedDate} ${formattedTime}\n`;
+			textToCopy += `====================`;
+
+			// Copiar al portapapeles
+			navigator.clipboard.writeText(textToCopy)
+				.then(() => {
+					// Mostrar notificación de éxito
+					showCopyNotification();
+				})
+				.catch(err => {
+					console.error('Error al copiar: ', err);
+					// Fallback para navegadores antiguos
+					fallbackCopyTextToClipboard(textToCopy);
+				});
+		}
+
+		// Mostrar notificación de copiado exitoso
+		function showCopyNotification() {
+			// Crear elemento de notificación
+			const notification = document.createElement('div');
+			notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+			notification.innerHTML = `
+				<i data-feather="check" class="w-5 h-5"></i>
+				<span>¡Datos copiados al portapapeles!</span>
+			`;
+			
+			document.body.appendChild(notification);
+			feather.replace();
+			
+			// Remover después de 3 segundos
+			setTimeout(() => {
+				notification.remove();
+			}, 3000);
+		}
+
+		// Fallback para navegadores que no soportan navigator.clipboard
+		function fallbackCopyTextToClipboard(text) {
+			const textArea = document.createElement('textarea');
+			textArea.value = text;
+			
+			// Evitar scrolling a la vista
+			textArea.style.top = '0';
+			textArea.style.left = '0';
+			textArea.style.position = 'fixed';
+			
+			document.body.appendChild(textArea);
+			textArea.focus();
+			textArea.select();
+			
+			try {
+				const successful = document.execCommand('copy');
+				if (successful) {
+					showCopyNotification();
+				} else {
+					alert('No se pudo copiar el texto. Por favor copia manualmente.');
+				}
+			} catch (err) {
+				console.error('Fallback error: ', err);
+				alert('No se pudo copiar el texto. Por favor copia manualmente.');
+			}
+			
+			document.body.removeChild(textArea);
+		}
+
+        // Cerrar modal de detalles
+        function closeDetailsModal() {
+            document.getElementById('details-modal').classList.add('hidden');
+        }
+
+        // Abrir modal para nuevo pedido
+        function openAddOrderModal() {
+            document.getElementById('modal-title').textContent = 'Nuevo Pedido';
+            document.getElementById('order-form').reset();
+            document.getElementById('edit-order-id').value = '';
+            document.getElementById('order-items').innerHTML = '';
+            document.getElementById('order-total').value = '0.00';
+            addOrderItem(); // Agregar un item por defecto
+            document.getElementById('order-modal').classList.remove('hidden');
+        }
+
+        // Cerrar modal de pedido
+        function closeOrderModal() {
+            document.getElementById('order-modal').classList.add('hidden');
+        }
+
+        // Agregar item al formulario de pedido
+        function addOrderItem() {
+            const itemsContainer = document.getElementById('order-items');
+            const itemIndex = itemsContainer.children.length;
+            
+            const itemHtml = `
+                <div class="flex space-x-2 order-item">
+                    <input type="text" placeholder="Producto" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" required>
+                    <input type="number" placeholder="Cantidad" class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" value="1" min="1" required>
+                    <input type="number" placeholder="Precio" class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" min="0" step="0.01"required>
+                    <button type="button" onclick="removeOrderItem(this)" class="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `;
+            
+            itemsContainer.insertAdjacentHTML('beforeend', itemHtml);
+            feather.replace();
+            calculateOrderTotal();
+        }
+
+        // Remover item del formulario
+        function removeOrderItem(button) {
+            button.closest('.order-item').remove();
+            calculateOrderTotal();
+        }
+
+        // Calcular total automáticamente
+        function calculateOrderTotal() {
+            const itemElements = document.querySelectorAll('.order-item');
+            let total = 0;
+            
+            itemElements.forEach(itemElement => {
+                const inputs = itemElement.querySelectorAll('input');
+                const quantity = parseInt(inputs[1].value) || 0;
+                const price = parseFloat(inputs[2].value) || 0;
+                total += quantity * price;
+            });
+            
+            document.getElementById('order-total').value = total.toFixed(2);
+        }
+
+        // Guardar pedido (crear o actualizar)
+        function saveOrder(e) {
+            e.preventDefault();
+            
+            const orderId = document.getElementById('edit-order-id').value;
+            const customerName = document.getElementById('customer-name').value;
+            const customerPhone = document.getElementById('customer-phone').value;
+            const customerAddress = document.getElementById('customer-address').value;
+            const customerNotes = document.getElementById('customer-notes').value;
+            const orderStatus = document.getElementById('order-status').value;
+            const orderTotal = parseFloat(document.getElementById('order-total').value);
+
+            // Validar campos requeridos
+            if (!customerName || !customerPhone || !customerAddress || orderTotal <= 0) {
+                showNotification('Por favor complete todos los campos requeridos', 'error');
+                return;
+            }
+
+            // Recoger items
+            const items = [];
+            const itemElements = document.querySelectorAll('.order-item');
+            itemElements.forEach(itemElement => {
+                const inputs = itemElement.querySelectorAll('input');
+                const name = inputs[0].value;
+                const quantity = parseInt(inputs[1].value);
+                const price = parseFloat(inputs[2].value);
+                
+                if (name && quantity > 0 && price > 0) {
+                    items.push({
+                        name: name,
+                        quantity: quantity,
+                        price: price
+                    });
+                }
+            });
+
+            if (items.length === 0) {
+                showNotification('Debe agregar al menos un item al pedido', 'error');
+                return;
+            }
+
+            const orderData = {
+                customer: {
+                    name: customerName,
+                    phone: customerPhone,
+                    address: customerAddress,
+                    notes: customerNotes
+                },
+                items: items,
+                total: orderTotal,
+                status: orderStatus,
+                businessId: 'burguer_express',
+                localTime: new Date().toLocaleString('es-VE'),
+                timestamp: new Date().toISOString(),
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            let promise;
+            if (orderId) {
+                // Actualizar pedido existente
+                const orderRef = database.ref('orders').child(orderId);
+                promise = orderRef.update(orderData);
+            } else {
+                // Crear nuevo pedido
+                promise = getNextOrderNumber().then(orderNumber => {
+                    const newOrderId = `ORD-${orderNumber}`;
+                    orderData.id = newOrderId;
+                    orderData.orderNumber = orderNumber;
+                    orderData.createdAt = firebase.database.ServerValue.TIMESTAMP;
+                    const orderRef = database.ref('orders').child(newOrderId);
+                    return orderRef.set(orderData);
+                });
+            }
+
+            promise.then(() => {
+                closeOrderModal();
+                showNotification('Pedido guardado correctamente', 'success');
+            }).catch(error => {
+                console.error('Error guardando pedido:', error);
+                showNotification('Error guardando pedido: ' + error.message, 'error');
+            });
+        }
+
+        // Obtener próximo número de orden
+        async function getNextOrderNumber() {
+            try {
+                const counterRef = database.ref('orderCounter');
+                const result = await counterRef.transaction(currentValue => {
+                    return (currentValue || 0) + 1;
+                });
+                
+                if (result.committed) {
+                    const nextNumber = result.snapshot.val();
+                    return String(nextNumber).padStart(5, '0');
+                } else {
+                    throw new Error('No se pudo incrementar el contador');
+                }
+            } catch (error) {
+                console.error('Error obteniendo número de orden:', error);
+                throw error;
+            }
+        }
+
+        // Editar pedido
+        function editOrder(orderId) {
+            const order = orders.find(o => o.key === orderId);
+            if (!order) return;
+
+            document.getElementById('modal-title').textContent = 'Editar Pedido';
+            document.getElementById('edit-order-id').value = orderId;
+            document.getElementById('customer-name').value = order.customer.name;
+            document.getElementById('customer-phone').value = order.customer.phone;
+            document.getElementById('customer-address').value = order.customer.address;
+            document.getElementById('customer-notes').value = order.customer.notes || '';
+            document.getElementById('order-status').value = order.status;
+            document.getElementById('order-total').value = order.total;
+
+            // Limpiar y cargar items
+            const itemsContainer = document.getElementById('order-items');
+            itemsContainer.innerHTML = '';
+            
+            if (order.items && order.items.length > 0) {
+                order.items.forEach(item => {
+                    const itemHtml = `
+                        <div class="flex space-x-2 order-item">
+                            <input type="text" placeholder="Producto" value="${item.name}" class="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" required>
+                            <input type="number" placeholder="Cantidad" value="${item.quantity}" class="w-20 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" min="1" required>
+                            <input type="number" placeholder="Precio" value="${item.price}" step="0.01" class="w-24 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" required>
+                            <button type="button" onclick="removeOrderItem(this)" class="p-2 text-red-600 hover:bg-red-50 rounded-lg">
+                                <i data-feather="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    `;
+                    itemsContainer.insertAdjacentHTML('beforeend', itemHtml);
+                });
+            } else {
+                addOrderItem();
+            }
+
+            feather.replace();
+            document.getElementById('order-modal').classList.remove('hidden');
+        }
+
+        // Eliminar pedido
+        function deleteOrder(orderId) {
+            orderToDelete = orderId;
+            document.getElementById('delete-modal').classList.remove('hidden');
+        }
+
+        // Confirmar eliminación
+        function confirmDelete() {
+            if (!orderToDelete) return;
+
+            const orderRef = database.ref('orders').child(orderToDelete);
+            orderRef.remove().then(() => {
+                showNotification('Pedido eliminado correctamente', 'success');
+                closeDeleteModal();
+            }).catch(error => {
+                console.error('Error eliminando pedido:', error);
+                showNotification('Error eliminando pedido', 'error');
+                closeDeleteModal();
+            });
+        }
+
+        // Cerrar modal de eliminación
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            orderToDelete = null;
+        }
+
+        // Mostrar notificación
+        function showNotification(message, type) {
+            // Crear elemento de notificación
+            const notification = document.createElement('div');
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 transform transition-transform duration-300 ${
+                type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+            }`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Remover después de 3 segundos
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Alternar modo oscuro
+        function toggleDarkMode() {
+            document.documentElement.classList.toggle('dark');
+            feather.replace();
+        }
+    </script>
+</body>
+</html>
