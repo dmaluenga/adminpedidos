@@ -379,7 +379,7 @@
         let orders = [];
         let currentOrders = [];
         let orderToDelete = null;
-        let knownOrderKeys = new Set(); // Para trackear pedidos que ya conocemos
+        let knownOrderKeys = new Set();
 
         // Inicializar cuando el DOM esté listo
         document.addEventListener('DOMContentLoaded', function() {
@@ -668,14 +668,7 @@
 
             let html = '<div class="space-y-4">';
             
-            // Ordenar por fecha de creación (más recientes primero)
-            const sortedOrders = [...ordersToDisplay].sort((a, b) => {
-                const timeA = a.createdAt || 0;
-                const timeB = b.createdAt || 0;
-                return timeB - timeA;
-            });
-            
-            sortedOrders.forEach(order => {
+            ordersToDisplay.forEach(order => {
                 const statusColors = {
                     pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
                     preparing: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
@@ -771,7 +764,7 @@
             window.open(url, '_blank');
         }
 
-        // Ver detalles del pedido
+        // Ver detalles del pedido - MODIFICADO: Agregado botón de imprimir
         function viewOrderDetails(orderId) {
             const order = orders.find(o => o.key === orderId);
             if (!order) return;
@@ -816,14 +809,21 @@
 
             const detailsHtml = `
                 <div class="space-y-4 dark:text-white">
-                    <!-- Header con botón de copiar -->
+                    <!-- Header con botones de copiar e imprimir -->
                     <div class="flex justify-between items-center mb-4">
                         <h3 class="text-xl font-bold">Detalles del Pedido</h3>
-                        <button onclick="copyOrderDetails('${orderId}')" 
-                                class="flex items-center space-x-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
-                            <i data-feather="copy" class="w-4 h-4"></i>
-                            <span>Copiar</span>
-                        </button>
+                        <div class="flex space-x-2">
+                            <button onclick="copyOrderDetails('${orderId}')" 
+                                    class="flex items-center space-x-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                                <i data-feather="copy" class="w-4 h-4"></i>
+                                <span>Copiar</span>
+                            </button>
+                            <button onclick="printOrderDetails('${orderId}')" 
+                                    class="flex items-center space-x-2 bg-blue-500 text-white px-4 py-2 rounded-lg hover:bg-blue-600 transition-colors">
+                                <i data-feather="printer" class="w-4 h-4"></i>
+                                <span>Imprimir</span>
+                            </button>
+                        </div>
                     </div>
 
                     <div class="grid grid-cols-2 gap-4">
@@ -877,6 +877,150 @@
             document.getElementById('details-content').innerHTML = detailsHtml;
             document.getElementById('details-modal').classList.remove('hidden');
             feather.replace();
+        }
+
+        // NUEVA FUNCIÓN: Imprimir detalles del pedido
+        function printOrderDetails(orderId) {
+            const order = orders.find(o => o.key === orderId);
+            if (!order) return;
+
+            const statusText = {
+                pending: 'Pendiente',
+                preparing: 'En preparación',
+                ready: 'Listo',
+                delivered: 'Entregado',
+                cancelled: 'Cancelado'
+            };
+
+            const orderDate = new Date(order.createdAt);
+            const formattedDate = orderDate.toLocaleDateString('es-VE');
+            const formattedTime = orderDate.toLocaleTimeString('es-VE', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+
+            // Crear contenido para imprimir
+            let printContent = `
+                <div style="font-family: Arial, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px;">
+                    <div style="text-align: center; border-bottom: 2px solid #333; padding-bottom: 15px; margin-bottom: 20px;">
+                        <h1 style="margin: 0; color: #333; font-size: 28px;">Burguer Express</h1>
+                        <p style="margin: 5px 0 0 0; color: #666; font-size: 16px;">Pedido #${order.orderNumber}</p>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h2 style="color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px;">Información del Pedido</h2>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                            <div>
+                                <strong>Estado:</strong> ${statusText[order.status]}
+                            </div>
+                            <div>
+                                <strong>Fecha:</strong> ${formattedDate} ${formattedTime}
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 20px;">
+                        <h2 style="color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px;">Información del Cliente</h2>
+                        <div style="line-height: 1.6;">
+                            <div><strong>Cliente:</strong> ${order.customer.name}</div>
+                            <div><strong>Teléfono:</strong> ${order.customer.phone}</div>
+                            <div><strong>Dirección:</strong> ${order.customer.address}</div>
+                            ${order.customer.notes ? `<div><strong>Notas:</strong> ${order.customer.notes}</div>` : ''}
+                        </div>
+                    </div>
+            `;
+
+            // Agregar items del pedido
+            if (order.items && order.items.length > 0) {
+                printContent += `
+                    <div style="margin-bottom: 20px;">
+                        <h2 style="color: #333; border-bottom: 1px solid #ddd; padding-bottom: 5px; margin-bottom: 10px;">Items del Pedido</h2>
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background-color: #f8f9fa;">
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: left;">Producto</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: center;">Cantidad</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Precio Unit.</th>
+                                    <th style="border: 1px solid #ddd; padding: 8px; text-align: right;">Subtotal</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                `;
+
+                order.items.forEach(item => {
+                    const subtotal = item.price * item.quantity;
+                    printContent += `
+                        <tr>
+                            <td style="border: 1px solid #ddd; padding: 8px;">${item.name}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: center;">${item.quantity}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">$${item.price.toFixed(2)}</td>
+                            <td style="border: 1px solid #ddd; padding: 8px; text-align: right;">$${subtotal.toFixed(2)}</td>
+                        </tr>
+                    `;
+                });
+
+                printContent += `
+                            </tbody>
+                        </table>
+                    </div>
+                `;
+            }
+
+            // Agregar total
+            printContent += `
+                    <div style="border-top: 2px solid #333; padding-top: 15px; text-align: right;">
+                        <div style="font-size: 18px; font-weight: bold;">
+                            <span style="margin-right: 10px;">TOTAL:</span>
+                            <span>$${order.total.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-top: 30px; text-align: center; color: #666; font-size: 12px;">
+                        <p>Impreso el ${new Date().toLocaleDateString('es-VE')} a las ${new Date().toLocaleTimeString('es-VE', { hour: '2-digit', minute: '2-digit' })}</p>
+                    </div>
+                </div>
+            `;
+
+            // Crear ventana de impresión
+            const printWindow = window.open('', '_blank', 'width=800,height=600');
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <title>Pedido #${order.orderNumber} - Burguer Express</title>
+                    <style>
+                        body { 
+                            margin: 0; 
+                            padding: 20px; 
+                            font-family: Arial, sans-serif; 
+                            background-color: white;
+                        }
+                        @media print {
+                            body { margin: 0; }
+                            .no-print { display: none; }
+                        }
+                    </style>
+                </head>
+                <body>
+                    ${printContent}
+                    <div class="no-print" style="text-align: center; margin-top: 20px;">
+                        <button onclick="window.print()" style="padding: 10px 20px; background: #007bff; color: white; border: none; border-radius: 5px; cursor: pointer; margin-right: 10px;">
+                            Imprimir
+                        </button>
+                        <button onclick="window.close()" style="padding: 10px 20px; background: #6c757d; color: white; border: none; border-radius: 5px; cursor: pointer;">
+                            Cerrar
+                        </button>
+                    </div>
+                    <script>
+                        // Imprimir automáticamente al cargar
+                        window.onload = function() {
+                            window.print();
+                        };
+                    <\/script>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
         }
 
         // Función para copiar detalles del pedido al portapapeles
