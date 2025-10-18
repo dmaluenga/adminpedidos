@@ -160,7 +160,6 @@
             </div>
         </div>
 
-        <!-- Resto del código se mantiene igual -->
         <!-- Filters and Actions -->
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow mb-6">
             <div class="p-4 border-b dark:border-gray-700">
@@ -201,7 +200,7 @@
                                 <option value="asc">Más antiguos primero</option>
                             </select>
                             <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-gray-700 dark:text-gray-300">
-                                <i data-feather="maximize-2" class="w-4 h-4"></i>
+                                <i data-feather="arrow-up-down" class="w-4 h-4"></i>
                             </div>
                         </div>
                     </div>
@@ -240,25 +239,139 @@
         </div>
     </main>
 
-    <!-- Los modales se mantienen igual -->
     <!-- Add/Edit Order Modal -->
     <div id="order-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <!-- ... contenido del modal igual ... -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b dark:border-gray-700">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold dark:text-white" id="modal-title">Nuevo Pedido</h3>
+                    <button onclick="closeOrderModal()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                        <i data-feather="x"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <form id="order-form" class="p-6 space-y-4">
+                <input type="hidden" id="edit-order-id">
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Cliente *</label>
+                        <input type="text" id="customer-name" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Teléfono *</label>
+                        <input type="tel" id="customer-phone" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white">
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Dirección *</label>
+                    <textarea id="customer-address" rows="2" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Notas</label>
+                    <textarea id="customer-notes" rows="2" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white"></textarea>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Estado</label>
+                        <select id="order-status" class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white">
+                            <option value="pending">Pendiente</option>
+                            <option value="preparing">En preparación</option>
+                            <option value="ready">Listo</option>
+                            <option value="delivered">Entregado</option>
+                            <option value="cancelled">Cancelado</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Total *</label>
+                        <input type="number" id="order-total" step="0.01" required class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white" readonly>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Items del Pedido</label>
+                    <div id="order-items" class="space-y-2">
+                        <!-- Items will be added dynamically -->
+                    </div>
+                    <button type="button" onclick="addOrderItem()" class="mt-2 text-primary hover:text-secondary flex items-center dark:text-primary">
+                        <i data-feather="plus" class="w-4 h-4 mr-1"></i>
+                        Agregar item
+                    </button>
+                </div>
+
+                <div class="flex justify-end space-x-3 pt-4">
+                    <button type="button" onclick="closeOrderModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300">
+                        Cancelar
+                    </button>
+                    <button type="submit" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                        Guardar Pedido
+                    </button>
+                </div>
+            </form>
+        </div>
     </div>
 
     <!-- Order Details Modal -->
     <div id="details-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <!-- ... contenido del modal igual ... -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6 border-b dark:border-gray-700">
+                <div class="flex justify-between items-center">
+                    <h3 class="text-xl font-bold dark:text-white">Detalles del Pedido</h3>
+                    <button onclick="closeDetailsModal()" class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300">
+                        <i data-feather="x"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6" id="details-content">
+                <!-- Details will be loaded here -->
+            </div>
+        </div>
     </div>
 
     <!-- Delete Confirmation Modal -->
     <div id="delete-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <!-- ... contenido del modal igual ... -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full mx-4">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-feather="trash-2" class="text-red-600 w-6 h-6"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 dark:text-white">¿Eliminar pedido?</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Esta acción no se puede deshacer.</p>
+                <div class="flex justify-center space-x-3">
+                    <button onclick="closeDeleteModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300">
+                        Cancelar
+                    </button>
+                    <button onclick="confirmDelete()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                        Eliminar
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <!-- Delete All Orders Confirmation Modal -->
     <div id="delete-all-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
-        <!-- ... contenido del modal igual ... -->
+        <div class="bg-white dark:bg-gray-800 rounded-xl p-6 max-w-sm w-full mx-4">
+            <div class="text-center">
+                <div class="w-12 h-12 bg-red-100 dark:bg-red-900 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-feather="trash-2" class="text-red-600 w-6 h-6"></i>
+                </div>
+                <h3 class="text-lg font-bold mb-2 dark:text-white">¿Eliminar todos los pedidos?</h3>
+                <p class="text-gray-600 dark:text-gray-400 mb-4">Esta acción eliminará todos los pedidos y no se puede deshacer.</p>
+                <div class="flex justify-center space-x-3">
+                    <button onclick="closeDeleteAllModal()" class="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-300">
+                        Cancelar
+                    </button>
+                    <button onclick="confirmDeleteAll()" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700 transition-colors">
+                        Eliminar Todo
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
     <script>
@@ -266,7 +379,7 @@
         let orders = [];
         let currentOrders = [];
         let orderToDelete = null;
-        let isFirstLoad = true; // Para evitar notificaciones en la carga inicial
+        let knownOrderKeys = new Set(); // Para trackear pedidos que ya conocemos
 
         // Inicializar cuando el DOM esté listo
         document.addEventListener('DOMContentLoaded', function() {
@@ -282,8 +395,9 @@
             
             if (firebaseInitialized) {
                 updateConnectionStatus('Conectado', 'bg-green-500');
-                loadOrders();
+                setupRealTimeOrdersListener();
                 setupEventListeners();
+                requestNotificationPermission();
             } else {
                 updateConnectionStatus('Error de conexión', 'bg-red-500');
             }
@@ -314,40 +428,72 @@
             `;
         }
 
-        // Cargar pedidos desde Firebase
-        function loadOrders() {
+        // Configurar listener en tiempo real para pedidos
+        function setupRealTimeOrdersListener() {
             const ordersRef = database.ref('orders');
             
-            // Escuchar cambios en los pedidos
-            ordersRef.on('value', (snapshot) => {
-                const previousOrdersCount = orders.length;
+            // Escuchar por nuevos pedidos específicamente
+            ordersRef.on('child_added', (snapshot) => {
+                const newOrder = snapshot.val();
+                newOrder.key = snapshot.key;
+                
+                // Verificar si este es realmente un pedido nuevo
+                if (!knownOrderKeys.has(newOrder.key)) {
+                    knownOrderKeys.add(newOrder.key);
+                    
+                    // Solo mostrar notificación si no es la carga inicial
+                    if (orders.length > 0) {
+                        setTimeout(() => {
+                            showNewOrderNotification(newOrder);
+                        }, 1000);
+                    }
+                    
+                    orders.push(newOrder);
+                    updateStats();
+                    filterOrders();
+                }
+            });
+
+            // Escuchar cambios en pedidos existentes
+            ordersRef.on('child_changed', (snapshot) => {
+                const updatedOrder = snapshot.val();
+                updatedOrder.key = snapshot.key;
+                
+                const index = orders.findIndex(order => order.key === updatedOrder.key);
+                if (index !== -1) {
+                    orders[index] = updatedOrder;
+                    updateStats();
+                    filterOrders();
+                }
+            });
+
+            // Escuchar pedidos eliminados
+            ordersRef.on('child_removed', (snapshot) => {
+                const removedKey = snapshot.key;
+                knownOrderKeys.delete(removedKey);
+                orders = orders.filter(order => order.key !== removedKey);
+                updateStats();
+                filterOrders();
+            });
+
+            // Carga inicial de pedidos
+            ordersRef.once('value').then((snapshot) => {
                 orders = [];
+                knownOrderKeys.clear();
                 
                 snapshot.forEach((childSnapshot) => {
                     const order = childSnapshot.val();
                     order.key = childSnapshot.key;
                     orders.push(order);
+                    knownOrderKeys.add(order.key);
                 });
                 
                 updateStats();
                 filterOrders();
-                
-                // Detectar nuevos pedidos (solo después de la primera carga)
-                if (!isFirstLoad && orders.length > previousOrdersCount) {
-                    const newOrder = orders[0]; // El más reciente
-                    showNewOrderNotification(newOrder);
-                }
-                
-                isFirstLoad = false;
-                
-            }, (error) => {
-                console.error('Error cargando pedidos:', error);
+                updateConnectionStatus('Conectado', 'bg-green-500');
+            }).catch(error => {
+                console.error('Error en carga inicial:', error);
                 updateConnectionStatus('Error cargando datos', 'bg-red-500');
-            });
-            
-            // Escuchar específicamente nuevos pedidos agregados
-            ordersRef.on('child_added', (snapshot) => {
-                // Esta parte se maneja en el listener 'value' arriba
             });
         }
 
@@ -356,6 +502,8 @@
             const notification = document.getElementById('new-order-notification');
             const title = document.getElementById('notification-title');
             const message = document.getElementById('notification-message');
+            
+            console.log('Mostrando notificación para pedido:', order.orderNumber, order.customer.name);
             
             // Actualizar contenido
             title.textContent = '¡Nuevo Pedido! 🎉';
@@ -376,10 +524,30 @@
             // También mostrar notificación del sistema si está permitido
             if ("Notification" in window && Notification.permission === "granted") {
                 new Notification("Nuevo Pedido - Burguer Express", {
-                    body: `Pedido #${order.orderNumber} de ${order.customer.name}`,
+                    body: `Pedido #${order.orderNumber} de ${order.customer.name} - $${order.total.toFixed(2)}`,
                     icon: "https://i.imgur.com/3JK1fJK.png"
                 });
             }
+
+            // Hacer un pequeño efecto visual en la tarjeta del nuevo pedido
+            highlightNewOrder(order.key);
+        }
+
+        // Resaltar el nuevo pedido en la lista
+        function highlightNewOrder(orderKey) {
+            // Esperar a que se renderice la lista
+            setTimeout(() => {
+                const orderElement = document.querySelector(`[onclick*="${orderKey}"]`);
+                if (orderElement) {
+                    const card = orderElement.closest('.bg-gray-50') || orderElement.closest('.bg-white');
+                    if (card) {
+                        card.classList.add('ring-2', 'ring-green-500', 'animate-pulse');
+                        setTimeout(() => {
+                            card.classList.remove('ring-2', 'ring-green-500', 'animate-pulse');
+                        }, 5000);
+                    }
+                }
+            }, 1000);
         }
 
         // Ocultar notificación
@@ -407,7 +575,7 @@
 
         // Solicitar permisos para notificaciones del sistema
         function requestNotificationPermission() {
-            if ("Notification" in window) {
+            if ("Notification" in window && Notification.permission === "default") {
                 Notification.requestPermission().then(permission => {
                     if (permission === "granted") {
                         console.log("Permiso para notificaciones concedido");
@@ -416,12 +584,6 @@
             }
         }
 
-        // Llamar esta función cuando se cargue la página
-        document.addEventListener('DOMContentLoaded', function() {
-            requestNotificationPermission();
-        });
-
-        // El resto de las funciones se mantienen igual (updateStats, filterOrders, displayOrders, etc.)
         // Actualizar estadísticas
         function updateStats() {
             const total = orders.length;
@@ -506,7 +668,14 @@
 
             let html = '<div class="space-y-4">';
             
-            ordersToDisplay.forEach(order => {
+            // Ordenar por fecha de creación (más recientes primero)
+            const sortedOrders = [...ordersToDisplay].sort((a, b) => {
+                const timeA = a.createdAt || 0;
+                const timeB = b.createdAt || 0;
+                return timeB - timeA;
+            });
+            
+            sortedOrders.forEach(order => {
                 const statusColors = {
                     pending: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900 dark:text-yellow-200',
                     preparing: 'bg-orange-100 text-orange-800 dark:bg-orange-900 dark:text-orange-200',
@@ -531,7 +700,7 @@
                 });
 
                 html += `
-                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600">
+                    <div class="bg-gray-50 dark:bg-gray-700 rounded-lg p-4 border border-gray-200 dark:border-gray-600 transition-all duration-300" id="order-${order.key}">
                         <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
                             <div class="flex-1">
                                 <div class="flex items-center justify-between mb-2">
@@ -602,10 +771,500 @@
             window.open(url, '_blank');
         }
 
-        // ... (el resto de las funciones se mantienen igual: viewOrderDetails, copyOrderDetails, etc.)
+        // Ver detalles del pedido
+        function viewOrderDetails(orderId) {
+            const order = orders.find(o => o.key === orderId);
+            if (!order) return;
 
-        // Las funciones restantes (viewOrderDetails, copyOrderDetails, closeDetailsModal, openAddOrderModal, etc.)
-        // se mantienen exactamente igual que en el código anterior que te proporcioné
+            const statusText = {
+                pending: 'Pendiente',
+                preparing: 'En preparación',
+                ready: 'Listo',
+                delivered: 'Entregado',
+                cancelled: 'Cancelado'
+            };
+
+            const orderDate = new Date(order.createdAt);
+            const formattedDate = orderDate.toLocaleDateString('es-VE');
+            const formattedTime = orderDate.toLocaleTimeString('es-VE', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+
+            let itemsHtml = '';
+            if (order.items && order.items.length > 0) {
+                itemsHtml = `
+                    <div class="mt-4">
+                        <h4 class="font-semibold mb-2 dark:text-white">Items del pedido:</h4>
+                        <div class="space-y-2">
+                            ${order.items.map(item => `
+                                <div class="flex justify-between items-center p-2 bg-gray-50 dark:bg-gray-700 rounded">
+                                    <div class="dark:text-white">
+                                        <span class="font-medium">${item.name}</span>
+                                        <span class="text-gray-600 dark:text-gray-300 ml-2">x${item.quantity}</span>
+                                    </div>
+                                    <div class="text-right dark:text-white">
+                                        <div>$${item.price.toFixed(2)} c/u</div>
+                                        <div class="font-semibold">$${(item.price * item.quantity).toFixed(2)}</div>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            const detailsHtml = `
+                <div class="space-y-4 dark:text-white">
+                    <!-- Header con botón de copiar -->
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold">Detalles del Pedido</h3>
+                        <button onclick="copyOrderDetails('${orderId}')" 
+                                class="flex items-center space-x-2 bg-primary text-white px-4 py-2 rounded-lg hover:bg-secondary transition-colors">
+                            <i data-feather="copy" class="w-4 h-4"></i>
+                            <span>Copiar</span>
+                        </button>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="font-medium text-gray-700 dark:text-gray-300">Número de orden:</label>
+                            <p class="text-lg font-semibold">#${order.orderNumber}</p>
+                        </div>
+                        <div>
+                            <label class="font-medium text-gray-700 dark:text-gray-300">Estado:</label>
+                            <p>${statusText[order.status]}</p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="font-medium text-gray-700 dark:text-gray-300">Cliente:</label>
+                        <p>${order.customer.name}</p>
+                    </div>
+                    
+                    <div>
+                        <label class="font-medium text-gray-700 dark:text-gray-300">Teléfono:</label>
+                        <p>${order.customer.phone}</p>
+                    </div>
+                    
+                    <div>
+                        <label class="font-medium text-gray-700 dark:text-gray-300">Dirección:</label>
+                        <p>${order.customer.address}</p>
+                    </div>
+                    
+                    ${order.customer.notes ? `
+                        <div>
+                            <label class="font-medium text-gray-700 dark:text-gray-300">Notas:</label>
+                            <p>${order.customer.notes}</p>
+                        </div>
+                    ` : ''}
+                    
+                    ${itemsHtml}
+                    
+                    <div class="border-t dark:border-gray-600 pt-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-lg font-semibold">Total:</span>
+                            <span class="text-lg font-semibold">$${order.total.toFixed(2)}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="text-sm text-gray-500 dark:text-gray-400">
+                        <p>Pedido realizado: ${formattedDate} ${formattedTime}</p>
+                    </div>
+                </div>
+            `;
+
+            document.getElementById('details-content').innerHTML = detailsHtml;
+            document.getElementById('details-modal').classList.remove('hidden');
+            feather.replace();
+        }
+
+        // Función para copiar detalles del pedido al portapapeles
+        function copyOrderDetails(orderId) {
+            const order = orders.find(o => o.key === orderId);
+            if (!order) return;
+
+            const statusText = {
+                pending: 'Pendiente',
+                preparing: 'En preparación',
+                ready: 'Listo',
+                delivered: 'Entregado',
+                cancelled: 'Cancelado'
+            };
+
+            const orderDate = new Date(order.createdAt);
+            const formattedDate = orderDate.toLocaleDateString('es-VE');
+            const formattedTime = orderDate.toLocaleTimeString('es-VE', { 
+                hour: '2-digit', 
+                minute: '2-digit' 
+            });
+
+            // Formatear texto para copiar
+            let textToCopy = `PEDIDO #${order.orderNumber}\n`;
+            textToCopy += `====================\n`;
+            textToCopy += `Cliente: ${order.customer.name}\n`;
+            textToCopy += `Teléfono: ${order.customer.phone}\n`;
+            textToCopy += `Dirección: ${order.customer.address}\n`;
+            
+            if (order.customer.notes) {
+                textToCopy += `Notas: ${order.customer.notes}\n`;
+            }
+            
+            textToCopy += `Estado: ${statusText[order.status]}\n\n`;
+            
+            // Items del pedido
+            if (order.items && order.items.length > 0) {
+                textToCopy += `ITEMS DEL PEDIDO:\n`;
+                order.items.forEach(item => {
+                    const subtotal = item.price * item.quantity;
+                    textToCopy += `- ${item.name} x${item.quantity} - $${subtotal.toFixed(2)}\n`;
+                });
+                textToCopy += `\n`;
+            }
+            
+            textToCopy += `TOTAL: $${order.total.toFixed(2)}\n`;
+            textToCopy += `Fecha: ${formattedDate} ${formattedTime}\n`;
+            textToCopy += `====================`;
+
+            // Copiar al portapapeles
+            navigator.clipboard.writeText(textToCopy)
+                .then(() => {
+                    // Mostrar notificación de éxito
+                    showCopyNotification();
+                })
+                .catch(err => {
+                    console.error('Error al copiar: ', err);
+                    // Fallback para navegadores antiguos
+                    fallbackCopyTextToClipboard(textToCopy);
+                });
+        }
+
+        // Mostrar notificación de copiado exitoso
+        function showCopyNotification() {
+            // Crear elemento de notificación
+            const notification = document.createElement('div');
+            notification.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 flex items-center space-x-2';
+            notification.innerHTML = `
+                <i data-feather="check" class="w-5 h-5"></i>
+                <span>¡Datos copiados al portapapeles!</span>
+            `;
+            
+            document.body.appendChild(notification);
+            feather.replace();
+            
+            // Remover después de 3 segundos
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
+
+        // Fallback para navegadores que no soportan navigator.clipboard
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            
+            // Evitar scrolling a la vista
+            textArea.style.top = '0';
+            textArea.style.left = '0';
+            textArea.style.position = 'fixed';
+            
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    showCopyNotification();
+                } else {
+                    alert('No se pudo copiar el texto. Por favor copia manualmente.');
+                }
+            } catch (err) {
+                console.error('Fallback error: ', err);
+                alert('No se pudo copiar el texto. Por favor copia manualmente.');
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // Cerrar modal de detalles
+        function closeDetailsModal() {
+            document.getElementById('details-modal').classList.add('hidden');
+        }
+
+        // Abrir modal para nuevo pedido
+        function openAddOrderModal() {
+            document.getElementById('modal-title').textContent = 'Nuevo Pedido';
+            document.getElementById('order-form').reset();
+            document.getElementById('edit-order-id').value = '';
+            document.getElementById('order-items').innerHTML = '';
+            document.getElementById('order-total').value = '0.00';
+            addOrderItem(); // Agregar un item por defecto
+            document.getElementById('order-modal').classList.remove('hidden');
+        }
+
+        // Cerrar modal de pedido
+        function closeOrderModal() {
+            document.getElementById('order-modal').classList.add('hidden');
+        }
+
+        // Agregar item al formulario de pedido
+        function addOrderItem() {
+            const itemsContainer = document.getElementById('order-items');
+            const itemIndex = itemsContainer.children.length;
+            
+            const itemHtml = `
+                <div class="flex space-x-2 order-item">
+                    <input type="text" placeholder="Producto" class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white" required>
+                    <input type="number" placeholder="Cantidad" class="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white" value="1" min="1" required>
+                    <input type="number" placeholder="Precio" class="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white" min="0" step="0.01" required>
+                    <button type="button" onclick="removeOrderItem(this)" class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg">
+                        <i data-feather="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `;
+            
+            itemsContainer.insertAdjacentHTML('beforeend', itemHtml);
+            feather.replace();
+            calculateOrderTotal();
+        }
+
+        // Remover item del formulario
+        function removeOrderItem(button) {
+            button.closest('.order-item').remove();
+            calculateOrderTotal();
+        }
+
+        // Calcular total automáticamente
+        function calculateOrderTotal() {
+            const itemElements = document.querySelectorAll('.order-item');
+            let total = 0;
+            
+            itemElements.forEach(itemElement => {
+                const inputs = itemElement.querySelectorAll('input');
+                const quantity = parseInt(inputs[1].value) || 0;
+                const price = parseFloat(inputs[2].value) || 0;
+                total += quantity * price;
+            });
+            
+            document.getElementById('order-total').value = total.toFixed(2);
+        }
+
+        // Guardar pedido (crear o actualizar)
+        function saveOrder(e) {
+            e.preventDefault();
+            
+            const orderId = document.getElementById('edit-order-id').value;
+            const customerName = document.getElementById('customer-name').value;
+            const customerPhone = document.getElementById('customer-phone').value;
+            const customerAddress = document.getElementById('customer-address').value;
+            const customerNotes = document.getElementById('customer-notes').value;
+            const orderStatus = document.getElementById('order-status').value;
+            const orderTotal = parseFloat(document.getElementById('order-total').value);
+
+            // Validar campos requeridos
+            if (!customerName || !customerPhone || !customerAddress || orderTotal <= 0) {
+                showNotification('Por favor complete todos los campos requeridos', 'error');
+                return;
+            }
+
+            // Recoger items
+            const items = [];
+            const itemElements = document.querySelectorAll('.order-item');
+            itemElements.forEach(itemElement => {
+                const inputs = itemElement.querySelectorAll('input');
+                const name = inputs[0].value;
+                const quantity = parseInt(inputs[1].value);
+                const price = parseFloat(inputs[2].value);
+                
+                if (name && quantity > 0 && price > 0) {
+                    items.push({
+                        name: name,
+                        quantity: quantity,
+                        price: price
+                    });
+                }
+            });
+
+            if (items.length === 0) {
+                showNotification('Debe agregar al menos un item al pedido', 'error');
+                return;
+            }
+
+            const orderData = {
+                customer: {
+                    name: customerName,
+                    phone: customerPhone,
+                    address: customerAddress,
+                    notes: customerNotes
+                },
+                items: items,
+                total: orderTotal,
+                status: orderStatus,
+                businessId: 'burguer_express',
+                localTime: new Date().toLocaleString('es-VE'),
+                timestamp: new Date().toISOString(),
+                updatedAt: firebase.database.ServerValue.TIMESTAMP
+            };
+
+            let promise;
+            if (orderId) {
+                // Actualizar pedido existente
+                const orderRef = database.ref('orders').child(orderId);
+                promise = orderRef.update(orderData);
+            } else {
+                // Crear nuevo pedido
+                promise = getNextOrderNumber().then(orderNumber => {
+                    const newOrderId = `ORD-${orderNumber}`;
+                    orderData.id = newOrderId;
+                    orderData.orderNumber = orderNumber;
+                    orderData.createdAt = firebase.database.ServerValue.TIMESTAMP;
+                    const orderRef = database.ref('orders').child(newOrderId);
+                    return orderRef.set(orderData);
+                });
+            }
+
+            promise.then(() => {
+                closeOrderModal();
+                showNotification('Pedido guardado correctamente', 'success');
+            }).catch(error => {
+                console.error('Error guardando pedido:', error);
+                showNotification('Error guardando pedido: ' + error.message, 'error');
+            });
+        }
+
+        // Obtener próximo número de orden
+        async function getNextOrderNumber() {
+            try {
+                const counterRef = database.ref('orderCounter');
+                const result = await counterRef.transaction(currentValue => {
+                    return (currentValue || 0) + 1;
+                });
+                
+                if (result.committed) {
+                    const nextNumber = result.snapshot.val();
+                    return String(nextNumber).padStart(5, '0');
+                } else {
+                    throw new Error('No se pudo incrementar el contador');
+                }
+            } catch (error) {
+                console.error('Error obteniendo número de orden:', error);
+                throw error;
+            }
+        }
+
+        // Editar pedido
+        function editOrder(orderId) {
+            const order = orders.find(o => o.key === orderId);
+            if (!order) return;
+
+            document.getElementById('modal-title').textContent = 'Editar Pedido';
+            document.getElementById('edit-order-id').value = orderId;
+            document.getElementById('customer-name').value = order.customer.name;
+            document.getElementById('customer-phone').value = order.customer.phone;
+            document.getElementById('customer-address').value = order.customer.address;
+            document.getElementById('customer-notes').value = order.customer.notes || '';
+            document.getElementById('order-status').value = order.status;
+            document.getElementById('order-total').value = order.total;
+
+            // Limpiar y cargar items
+            const itemsContainer = document.getElementById('order-items');
+            itemsContainer.innerHTML = '';
+            
+            if (order.items && order.items.length > 0) {
+                order.items.forEach(item => {
+                    const itemHtml = `
+                        <div class="flex space-x-2 order-item">
+                            <input type="text" placeholder="Producto" value="${item.name}" class="flex-1 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white" required>
+                            <input type="number" placeholder="Cantidad" value="${item.quantity}" class="w-20 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white" min="1" required>
+                            <input type="number" placeholder="Precio" value="${item.price}" step="0.01" class="w-24 px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent dark:bg-gray-700 dark:text-white" required>
+                            <button type="button" onclick="removeOrderItem(this)" class="p-2 text-red-600 hover:bg-red-50 dark:hover:bg-red-900 rounded-lg">
+                                <i data-feather="trash-2" class="w-4 h-4"></i>
+                            </button>
+                        </div>
+                    `;
+                    itemsContainer.insertAdjacentHTML('beforeend', itemHtml);
+                });
+            } else {
+                addOrderItem();
+            }
+
+            feather.replace();
+            document.getElementById('order-modal').classList.remove('hidden');
+        }
+
+        // Eliminar pedido
+        function deleteOrder(orderId) {
+            orderToDelete = orderId;
+            document.getElementById('delete-modal').classList.remove('hidden');
+        }
+
+        // Confirmar eliminación
+        function confirmDelete() {
+            if (!orderToDelete) return;
+
+            const orderRef = database.ref('orders').child(orderToDelete);
+            orderRef.remove().then(() => {
+                showNotification('Pedido eliminado correctamente', 'success');
+                closeDeleteModal();
+            }).catch(error => {
+                console.error('Error eliminando pedido:', error);
+                showNotification('Error eliminando pedido', 'error');
+                closeDeleteModal();
+            });
+        }
+
+        // Cerrar modal de eliminación
+        function closeDeleteModal() {
+            document.getElementById('delete-modal').classList.add('hidden');
+            orderToDelete = null;
+        }
+
+        // Confirmar eliminar todos los pedidos
+        function confirmDeleteAllOrders() {
+            if (orders.length === 0) {
+                showNotification('No hay pedidos para eliminar', 'info');
+                return;
+            }
+            document.getElementById('delete-all-modal').classList.remove('hidden');
+        }
+
+        // Eliminar todos los pedidos
+        function confirmDeleteAll() {
+            const ordersRef = database.ref('orders');
+            ordersRef.remove().then(() => {
+                showNotification('Todos los pedidos han sido eliminados', 'success');
+                closeDeleteAllModal();
+            }).catch(error => {
+                console.error('Error eliminando todos los pedidos:', error);
+                showNotification('Error eliminando todos los pedidos', 'error');
+                closeDeleteAllModal();
+            });
+        }
+
+        // Cerrar modal de eliminar todo
+        function closeDeleteAllModal() {
+            document.getElementById('delete-all-modal').classList.add('hidden');
+        }
+
+        // Mostrar notificación
+        function showNotification(message, type) {
+            // Crear elemento de notificación
+            const notification = document.createElement('div');
+            const bgColor = type === 'success' ? 'bg-green-500' : 
+                           type === 'error' ? 'bg-red-500' : 
+                           'bg-blue-500';
+            
+            notification.className = `fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 transform transition-transform duration-300 ${bgColor} text-white`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            // Remover después de 3 segundos
+            setTimeout(() => {
+                notification.remove();
+            }, 3000);
+        }
 
         // Alternar modo oscuro
         function toggleDarkMode() {
@@ -619,10 +1278,14 @@
             feather.replace();
         }
 
-        // Inicializar notificaciones del sistema al cargar
-        document.addEventListener('DOMContentLoaded', function() {
-            requestNotificationPermission();
-        });
+        // Función auxiliar para debug
+        function debugOrders() {
+            console.log('Total orders:', orders.length);
+            console.log('Known keys:', knownOrderKeys.size);
+            orders.forEach(order => {
+                console.log(`Order #${order.orderNumber} - Key: ${order.key} - Cliente: ${order.customer.name}`);
+            });
+        }
     </script>
 </body>
 </html>
